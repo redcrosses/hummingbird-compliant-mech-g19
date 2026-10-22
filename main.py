@@ -6,7 +6,9 @@ import matplotlib
 from matplotlib import pyplot as plt
 
 # I used Z for lengths instead of L, because the paper I used for the optimisation also used Z
-Z1, Z2, Z3, Z4, Z5, Z6, th1 = 98.542, 46.651, 58.395, 94.440, 88.002, 95.110, 2.3124
+Z1, Z2, Z3, Z4, Z5, Z6, th1 = 112.059, 62.614, 72.996, 110.871, 53.876, 42.156, 2.2635
+# 112.059, 62.614, 72.996, 110.871, 53.876, 42.156, 2.2635
+# 98.542, 46.651, 58.395, 94.440, 88.002, 95.110, 2.3124
 
 O2, O4, A, B, P = get_joints('O2 O4 A B P')
 B.follow = True
@@ -86,6 +88,27 @@ ax3.set_xlabel(r'Input angle $\theta_2$ $\in [0^\circ, 360^\circ]$')
 ax3.set_ylabel(r'Joint angles')
 ax3.legend(); ax3.minorticks_on(); ax3.grid(which='both')
 fig3.tight_layout()
+plt.show()
+
+# angle of link Z6 (B -> P), measured from the +y-axis, positive towards +x (clockwise)
+thBP = np.rad2deg(np.mod(r6.pos.thetas[:n] + np.pi, 2*np.pi))   # from the x-axis
+thBP_y = (90 - thBP + 180) % 360 - 180                           # from the y-axis, -180...180
+
+# target wing angle, x = % of the flap cycle
+x_cycle = np.linspace(0, 100, 201)
+target = -np.sin(2*np.pi*x_cycle/100)*64.5 + 28
+
+fig5, ax5 = plt.subplots()
+ax5.plot(theta2_deg, thBP_y, color='maroon', label=r'Z$_6$ (B$\rightarrow$P)')
+ax5.plot(x_cycle*3.6, target, color='navy', linestyle='--', label='target')
+ax5.set_xlim(0, 360)
+ax5.set_xticks(np.arange(0, 361, 60))
+ax5.set_title(r'Angle of $Z_6$ relative to the y-axis')
+ax5.set_xlabel(r'Input angle $\theta_2$ (deg)')
+ax5.set_ylabel('Angle from y-axis (deg)')
+ax5.legend(); ax5.minorticks_on(); ax5.grid(which='both')
+fig5.tight_layout()
+
 plt.show()
 
 # ani.save('../animations/crankslider.mp4', dpi=300)
