@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("TkAgg") 
 from matplotlib import pyplot as plt
+from matplotlib.widgets import Slider
 
 O2, A, B, O4, C, D, E, F, H = get_joints('O2 A B O4 C D E F H')
 H.follow = True  # Traced path joint
@@ -56,6 +57,37 @@ mechanism.iterate()
 ani, fig, ax = mechanism.get_animation()
 
 ax.set_title('Dual-Actuator Compliant Mechanism')
+
+# ---- Slotted link L8 (k): angle and angular speed ----
+# Angle of L8 taken from the solved joint positions (F -> H), unwrapped so it is continuous
+th_k = np.unwrap(np.arctan2(np.array(H.y_positions) - np.array(F.y_positions),
+                            np.array(H.x_positions) - np.array(F.x_positions)))
+dth_dinp = np.gradient(th_k, t2)   # rad of L8 per rad of actuator input
+
+# Actuator frequency (Hz): input angle = 2*pi*f*t, the second actuator follows at -inp
+# Actuator frequency (Hz): input angle = 2*pi*f*t, the second actuator follows at -inp
+f0 = 1.0
+frames_per_rev = len(t2) / (t2[-1] - t2[0]) * 2 * np.pi
+
+time = t2 / (2 * np.pi * f0)
+
+# Linear velocity of point H on bar L8
+vx_H = np.gradient(H.x_positions, time)
+vy_H = np.gradient(H.y_positions, time)
+v_H = np.sqrt(vx_H**2 + vy_H**2)
+
+fig2, (ax_ang, ax_spd) = plt.subplots(2, 1, sharex=True, figsize=(8, 6))
+
+line_ang, = ax_ang.plot(time, np.rad2deg(th_k))
+line_spd, = ax_spd.plot(time, v_H)
+
+ax_ang.set_ylabel('L8 angle [deg]')
+ax_spd.set_ylabel('L8 linear speed [units/s]')
+ax_spd.set_xlabel('Time [s]')
+ax_ang.grid(True)
+ax_spd.grid(True)
+
+
 plt.show()
 
 print(np.max(H.y_positions))
