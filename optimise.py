@@ -1,5 +1,3 @@
-# Target path as per Marks implementation 
-# so according to the paper I used
 from simulate_6_bar import simulate_6bar
 import mechanism as msm
 import numpy as np
@@ -118,7 +116,7 @@ if __name__ == "__main__":
         plt.show()
         ax.set_title('6-bar')
 
-def preview_path():
+def preview_path(omega, t):
     fig, ax = plt.subplots(figsize=(8, 6))
     xt, yt = target_path(omega, t)
     ax.plot(xt, yt, 'k--', label='Target Path')
