@@ -1,54 +1,42 @@
-"""Fit the 8-bar slider linkage to a target path: one SLSQP run from one start.
-
-  minimize    0.5 * || (G(theta2_i) - T_i) / scale ||^2          (path-array residuals)
-  subject to  at each pass through the TARGET's self-intersection:
-                  dist(path polyline, crossing) <= pin_tol * scale   (pass through it)
-              margin <= F_ratio <= 1 - margin at every crank angle      (F stays on slider D-G)
-                  v_min <= |v_G| <= v_max                            (velocity gate)
-                  a_min <= slider angle <= a_max                     (angle window)
-                  |angle_a - angle_b| >= min_angle_sep               (between passes)
-              lower <= x <= upper                                    (link-length bounds)
-
-T_i is the target point crank sample i should land on. Because the target has no
-timing, T_i is found inside the objective on every evaluation: a monotone, cyclic
-nearest-point tracking along the target, refined by exact projection onto the target
-polyline. The tracking can only advance a few target points per sample, so the two
-branches of a figure-eight are never confused at the crossing.
-
-If your target is already timed to the crank samples, use correspondence='index'
-(T_i is then simply target[i]).
-"""
 import csv
-
+from collections import Counter
 import numpy as np
 from scipy.optimize import minimize
+from scipy.signal import argrelmin
+import shapely
 
-from main_upd import (analyze, find_crossings, crossing_passes,
-                              plot_results, DEFAULT_DIMENSIONS)
+from main8bar import analyze
 
 # Free design variables (link lengths). L42 is tied to L41 as in your original script;
 # phi1 and phi2 are held fixed (see `phi` in optimize()).
 NAMES = ['L21', 'L22', 'L3', 'L41', 'L51', 'L52', 'L6', 'L71', 'Lslider']
 DIM_NAMES = ['L21', 'L22', 'L3', 'L41', 'L42', 'L51', 'L52', 'L6', 'L71',
              'Lslider', 'phi1', 'phi2']  # order expected by analyze()
-
+DEFAULT_DIMENSIONS = np.array([
+    3,      # L21
+    4,      # L22
+    5.5,    # L3
+    12.8,   # L41
+    12.8,   # L42
+    13,     # L51
+    1.41,   # L52
+    9.3,    # L6
+    4.4,    # L71
+    10.5,   # Lslider
+    np.deg2rad(30),  # phi1
+    np.deg2rad(5),   # phi2
+])
 
 def x_to_dimensions(x, phi=DEFAULT_DIMENSIONS[10:12]):
     L21, L22, L3, L41, L51, L52, L6, L71, Ls = x
     return np.array([L21, L22, L3, L41, L41, L51, L52, L6, L71, Ls, phi[0], phi[1]])
 
-
 def dimensions_to_x(d):
     return np.array([d[0], d[1], d[2], d[3], d[5], d[6], d[7], d[8], d[9]])
-
 
 def default_bounds(nominal=DEFAULT_DIMENSIONS, len_frac=0.3):
     return [(v * (1 - len_frac), v * (1 + len_frac)) for v in dimensions_to_x(nominal)]
 
-
-# ----------------------------------------------------------------------------
-# Target path handling
-# ----------------------------------------------------------------------------
 def resample_closed(path, n=400):
     """Resample a closed polyline at n points, uniform in arc length (no repeated end)."""
     p = np.vstack([path, path[:1]]) if not np.allclose(path[0], path[-1]) else path
@@ -56,14 +44,7 @@ def resample_closed(path, n=400):
     u = np.linspace(0, s[-1], n, endpoint=False)
     return np.stack([np.interp(u, s, p[:, 0]), np.interp(u, s, p[:, 1])], axis=1)
 
-
 def track_target(Pc, D, window, flips=(False, True)):
-    """Assign every path sample to a target sample: monotone and cyclic.
-
-    Each sample may only advance 0..window target points past the previous one. All M
-    start points (and the given traversal directions) are tried; the lowest total
-    squared distance wins. Returns (indices into D, total squared distance, flip).
-    """
     M, N = len(D), len(Pc)
     ar, offs = np.arange(M), np.arange(window + 1)
     best_cost, best_s, best_flip = np.inf, None, False
@@ -86,14 +67,10 @@ def track_target(Pc, D, window, flips=(False, True)):
             best_cost, best_s, best_flip = cost[k], ((M - 1 - seq) if flip else seq), flip
     return best_s, best_cost, best_flip
 
-
 def _wrap180(a):
     return (a + 180.0) % 360.0 - 180.0
 
-
 def interp_at_point(Pc, speed, theta, pt, k):
-    """Distance^2 from `pt` to the path polyline near sample k, and the speed / slider
-    angle interpolated at the closest point (between the two bracketing samples)."""
     n = len(Pc)
     best = None
     for j in (k - 1, k):
@@ -105,10 +82,27 @@ def interp_at_point(Pc, speed, theta, pt, k):
             best = (d2, (1 - u) * speed[a] + u * speed[b], (1 - u) * theta[a] + u * theta[b])
     return best
 
+def crossing_passes(path, point):
+    """Sample indices at which the path passes through `point` (local minima of distance)."""
+    closed = np.allclose(path[0], path[-1])
+    pts = path[:-1] if closed else path
+    d = np.hypot(*(pts - point).T)
+    tol = 2 * np.hypot(*np.diff(pts, axis=0).T).max()
+    idx = argrelmin(d, mode='wrap')[0]
+    return idx[d[idx] < tol]
 
-# ----------------------------------------------------------------------------
-# Problem definition
-# ----------------------------------------------------------------------------
+def find_crossings(path, t, tol=0.05):
+    curve = shapely.LineString(path)
+    nodes = shapely.node(curve)
+    ends = Counter()
+    for seg in nodes.geoms:
+        ends[seg.coords[0]] += 1
+        ends[seg.coords[-1]] += 1
+    pts = np.array([p for p, c in ends.items() if c > 2]).reshape(-1, 2)
+
+    times = [t[crossing_passes(path, p)] for p in pts]
+    return pts, times
+    
 class PathProblem:
     """Residuals and constraints as functions of the design vector x (9 link lengths)."""
 
@@ -160,7 +154,7 @@ class PathProblem:
         key = np.asarray(x, float).tobytes()
         if key != self._key:
             try:
-                res = analyze(x_to_dimensions(x, self.phi), T=self.T, N=self.N)
+                res = analyze(dimensions=x_to_dimensions(x, self.phi), T=self.T, N=self.N)
                 P = res['path']
                 ok = (np.all(np.isfinite(P)) and np.all(np.isfinite(res['speed']))
                       and np.all(np.isfinite(res['F_ratio']))
@@ -319,10 +313,64 @@ class PathProblem:
                     speeds=np.array([v[1] for v in pv]), angles=np.array([v[2] for v in pv]),
                     crossings=[p for p, _ in groups])
 
+def plot_results(result, animate=True, target=None, title=None,
+                 save_path=None, show=True):
+    import matplotlib
+    if show:
+        matplotlib.use("QtAgg")
+    from matplotlib import pyplot as plt
 
-# ----------------------------------------------------------------------------
-# Output: parameter CSV
-# ----------------------------------------------------------------------------
+    t, path = result['t'], result['path']
+    theta, speed = result['slider_theta'], result['speed']
+    crossings, passes = result['crossings'], result['crossing_idx']
+
+    ani = fig = None
+    if animate:
+        ani, fig, ax = result['mechanism'].get_animation(show_joints=True,)
+        ax.set_title(title or '8-bar Slider')
+        if target is not None:
+            tg = np.asarray(target)
+            ax.plot(tg[:, 0], tg[:, 1], '--', color='gray', lw=1.5, label='target')
+            ax.legend()
+        if len(crossings):
+            ax.scatter(crossings[:, 0], crossings[:, 1], color='orange', zorder=5)
+
+    fig2, axs = plt.subplots(2, 1)
+    axs[0].set_title(r'Analysis of $G$')
+    axs[0].plot(t, path[:, 0], color='red')
+    axs[0].set_ylabel(r'$G_x$', color='red')
+    axs[0].tick_params(axis='y', labelcolor='red')
+    axs[0].set_xlabel(r'Time (s)')
+
+    axs2 = axs[0].twinx()
+    axs2.set_ylabel(r'$\theta_{out}$', color='blue')
+    axs2.tick_params(axis='y', labelcolor='blue')
+    axs2.plot(t, theta, color='blue')
+
+    axs[1].plot(t, path[:, 1], color='maroon')
+    axs[1].set_ylabel(r'$G_y$')
+    axs[1].set_xlabel(r'Time (s)')
+
+    for c, idx in zip(crossings, passes):
+        axs[0].hlines(c[0], xmin=t[0], xmax=t[-1], colors='orange')
+        axs[1].hlines(c[1], xmin=t[0], xmax=t[-1], colors='orange')
+        axs[0].scatter(t[idx], path[idx, 0], color='orange', zorder=3)
+        axs[1].scatter(t[idx], path[idx, 1], color='orange', zorder=3)
+        axs2.scatter(t[idx], theta[idx], color='orange', zorder=3)
+        for i in idx:
+            axs2.annotate(f'{theta[i]:.1f}\u00b0, v={speed[i]:.2f}', (t[i], theta[i]),
+                          textcoords='offset points', xytext=(6, 6))
+
+    for a_ in (axs[0], axs[1]):
+        a_.minorticks_on()
+        a_.grid(which='both')
+    fig2.tight_layout()
+    if save_path:
+        fig2.savefig(save_path, dpi=200)
+    if show:
+        plt.show()
+    return ani, fig, fig2
+
 def save_parameters_csv(out, path='optimized_parameters.csv', nominal=DEFAULT_DIMENSIONS):
     """Write the optimized dimensions (plus nominal and search bounds) to CSV.
     Angles are stored in radians, i.e. exactly what analyze() expects."""
@@ -338,30 +386,16 @@ def save_parameters_csv(out, path='optimized_parameters.csv', nominal=DEFAULT_DI
                         repr(float(nom)), lo, hi])
     return path
 
-
 def load_parameters_csv(path='optimized_parameters.csv'):
     """Read a CSV written by save_parameters_csv -> 12-vector for analyze()."""
     with open(path, newline='') as f:
         vals = {row['parameter']: float(row['value']) for row in csv.DictReader(f)}
     return np.array([vals[n] for n in DIM_NAMES])
 
-
-# ----------------------------------------------------------------------------
-# Quick look at a saved design
-# ----------------------------------------------------------------------------
 def plot_from_csv(csv_path='optimized_parameters.csv', target=None, T=10.0, N=100,
                   show=True, animate=True, save_path=None, verbose=True):
-    """Load a parameter CSV, simulate it, plot it and print the key numbers.
-
-    Use the same T and N as the optimization (speeds scale with 1/T). `target`
-    (optional) is overlaid on the plots. Speeds and angles at the path's
-    self-intersection are interpolated at the crossing itself.
-
-    Returns dict: dimensions, result (analyze output), speed_stats, crossing
-    (list of dicts: point, times, speeds, angles), F_ratio_range.
-    """
     dims = load_parameters_csv(csv_path)
-    res = analyze(dims, T=T, N=N)
+    res = analyze(dimensions=dims, T=T, N=N)
     Pc, speed, theta, t = res['path'][:-1], res['speed'], res['slider_theta'], res['t']
 
     crossing = []
@@ -392,32 +426,12 @@ def plot_from_csv(csv_path='optimized_parameters.csv', target=None, T=10.0, N=10
                  title=f'8-bar Slider ({csv_path})', save_path=save_path, show=show)
     return out
 
-
-# ----------------------------------------------------------------------------
-# Public entry point
-# ----------------------------------------------------------------------------
 def optimize(target, gate=None, angle_gate=None, min_angle_sep=None, gate_point=None,
              bounds=None, x0=None, T=10.0, N=100, M=400, pin_tol=0.005,
              correspondence='track', phi=None, slider_margin=0.02, maxiter=200, verbose=True,
              csv_path='optimized_parameters.csv', plot=True,
              plot_path='optimized_solution.png'):
-    """Fit linkage lengths to `target` with a single SLSQP run from x0.
 
-    target          (M,2) closed target path for G (one crank revolution)
-    gate            (v_min, v_max) speed window for G at the target's crossing
-                    (use -inf / inf for one-sided; interpolated AT the crossing)
-    angle_gate      (a_min, a_max) slider angle window (deg) at each pass
-    min_angle_sep   minimum angle difference (deg) between the passes
-    gate_point      (x, y): gate only the target crossing nearest this point
-    pin_tol         how close G must pass to the crossing (fraction of the target's
-                    bounding-box diagonal)
-    correspondence  'track' (target untimed) or 'index' (one target point per crank sample)
-    x0              starting link lengths (9 free variables); default = DEFAULT_DIMENSIONS
-    phi             fixed (phi1, phi2) in rad; default = DEFAULT_DIMENSIONS[10:12]
-    slider_margin   F must stay within [margin, 1-margin] of the slider length D->G for
-                    the whole crank cycle (None disables)
-    csv_path / plot / plot_path  outputs (None / False to skip)
-    """
     bounds = bounds or default_bounds()
     lo, hi = np.array(bounds).T
     x_start = dimensions_to_x(DEFAULT_DIMENSIONS) if x0 is None else np.asarray(x0, float)
