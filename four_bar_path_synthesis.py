@@ -676,7 +676,13 @@ class FourBarPathSynthesis:
 # optimise each and return the best.
 # =============================================================================
 def atlas_search(desired_xy, th2, n_samples=3000, n_refine=8, seed=0, verbose=True,
-                 **problem_kwargs):
+                 n_keep=1, **problem_kwargs):
+    """
+    Random starting linkages, the n_refine best are optimised.
+    n_keep = 1: returns (best problem, its initial guess), as before.
+    n_keep > 1: returns a list of up to n_keep different optimised four-bars
+                [(problem, initial guess), ...], best path error first.
+    """
     rng = np.random.default_rng(seed)
     P = np.asarray(desired_xy, float)
     size = np.max(np.ptp(P, axis=0))
@@ -697,16 +703,30 @@ def atlas_search(desired_xy, th2, n_samples=3000, n_refine=8, seed=0, verbose=Tr
         raise ValueError("No starting linkage satisfies the constraints. Enlarge the "
                          "design box / link bounds, or increase n_samples.")
     cands.sort(key=lambda c: c[0])
-    best = None
+    results = []
     for E0, x, br, cp in cands[:n_refine]:
         prob = FourBarPathSynthesis(desired_xy, x, th2=th2, branch=br, cp_side=cp,
                                     **problem_kwargs)
         prob.run(max_iter=300, method="lm", verbose=False)
         if verbose:
             print(f"  atlas start E = {E0:10.4g}  ->  optimum E = {prob.history[-1]:.4g}")
-        if best is None or prob.history[-1] < best[0].history[-1]:
-            best = (prob, x)
-    return best          # (problem with optimal x, its initial guess)
+        results.append((prob, x))
+    results.sort(key=lambda r: r[0].history[-1])
+    if n_keep == 1:
+        return results[0]          # (problem with optimal x, its initial guess)
+
+    # keep only different designs: several starts often end in the same optimum
+    kept = []
+    for prob, x in results:
+        if not prob.feasible(prob.x):
+            continue
+        same = any(p.branch == prob.branch and p.cp_side == prob.cp_side and
+                   np.max(np.abs(p.x[:6] - prob.x[:6])) < 0.01 * size for p, _ in kept)
+        if not same:
+            kept.append((prob, x))
+        if len(kept) == n_keep:
+            break
+    return kept
 
 def stroke_angle_targets(desired_xy, down_deg=45.0, up_deg=135.0, keep=0.5):
     """
@@ -888,7 +908,7 @@ if __name__ == "__main__":
     # Body: the fixed pivots O2, O4 must fit in a rectangle of at most BODY_AREA,
     # at least BODY_MIN_W wide and BODY_MIN_H tall. Position and shape are free.
     # BODY_CENTER_X = 0 keeps the body centred under the stroke; None = anywhere.
-    BODY_AREA = 1000.0         # mm^2  (= 10 cm^2)
+    BODY_AREA = 1600.0         # mm^2  (= 10 cm^2)
     BODY_MIN_W = 10.0          # mm
     BODY_MIN_H = 10.0          # mm
     BODY_CENTER_X = None
@@ -902,9 +922,8 @@ if __name__ == "__main__":
     #   ["A->P", "B->P"]  try both      ["B->P"]  wing on B->P only
     #   None              path only (no wing-angle target)
     WING_LINKS = ["A->P", "B->P"]
-    AOA = 45                                      # angle of attack on both strokes (deg)
     def target_angle(x):
-        return -np.sin(2 * np.pi * x / 100) * (90 - AOA)                 # deg from y-axis
+        return -np.sin(2 * np.pi * x / 100) * 64.5 + 28                  # deg from y-axis
     ANGLE_TARGETS = cycle_angle_targets(th2, target_angle, reference="y")
     W_LINK = None              # weight of the angle error; None = default, larger = angle counts more
     W_AREA = 10.0              # weight of the signed-area term (figure-eight vs oval); None = off
@@ -934,6 +953,10 @@ if __name__ == "__main__":
     plot_result(probB, x0B, "infinity_parh.png",
                 "infinity path (approximate synthesis)")
 
+    if probB.angle_link is not None:
+        plot_link_angle(probB)
+
+    plt.show()                 # opens all figure windows at the end               # opens all figure windows at the end
     if probB.angle_link is not None:
         plot_link_angle(probB)
 
