@@ -1,0 +1,15 @@
+﻿Group,Symbol,Value,Unit,Used as,JSON value
+Length,L1,73.8646673450504,mm,"loop 1, loop 2",73.8646673450504
+Length,L2,27.5308690719627,mm,"loop 1, loop 2",27.5308690719627
+Length,L3,84.4734335441051,mm,loop 1,84.4734335441051
+Length,L4,150,mm,To fix triangle,150
+Length,L5,128.402539267867,mm,loop 2,128.402539267867
+Length,L6,48.8866075220079,mm,loop 1,48.8866075220079
+Length,L7,27.1708576611995,mm,loop 2,27.1708576611995
+Length,L8,129.547303320354,mm,loop 2,129.547303320354
+Length,L9,25,mm,loop 2,25
+Fixed angle,θ1,-2.10422939883268,deg,"loop 1, loop 2",-0.0367257312268912
+Fixed angle,θ2 at start (ψ),-145.404743102909,deg,θ2 = psi − omega*t,-2.53779151516229
+Constant angle,α,87.0326937366737,deg,θ5 = θ3 − alpha + 180°,
+Constant angle,β,58.2366956118944,deg,θ7 = θ6 − beta,-1.01642208390929
+Constant angle,γ,65.7052255062089,deg,θ_wing = θ9 − gamma,1.99482013274109

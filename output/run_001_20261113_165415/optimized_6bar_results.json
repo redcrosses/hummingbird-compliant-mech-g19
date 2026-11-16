@@ -1,0 +1,124 @@
+{
+    "metadata": {
+        "run_folder": "run_001_20261113_165415",
+        "timestamp": "2026-11-13T16:54:15.190161",
+        "n_steps": 72,
+        "aoa_deg": 45.0,
+        "wing_neutral_deg": 90.0,
+        "peak_aoa_at_midstroke": true,
+        "lock_link_cd_to_wing": false,
+        "allow_floating_fig8_center": true,
+        "figure8_center_mm": [
+            -15.0,
+            36.49694366803956
+        ],
+        "figure8_center_x_bounds_mm": [
+            -15.0,
+            15.0
+        ],
+        "figure8_center_y_bounds_mm": [
+            10.0,
+            55.0
+        ],
+        "units": {
+            "length": "mm",
+            "angle": "deg_and_rad"
+        }
+    },
+    "optimizer_hyperparameters": {
+        "seeds": [
+            42
+        ],
+        "s1_popsize": 60,
+        "s1_maxiter": 800,
+        "s2_popsize": 60,
+        "s2_maxiter": 600,
+        "s3_maxiter": 3500,
+        "workers": -1
+    },
+    "optimization_weights": {
+        "W_S1_X_ERROR": 1.0,
+        "W_S1_Y_ERROR": 12.0,
+        "W_S1_Y_SPAN_DEFICIT": 5.0,
+        "W_S1_FLEXURE_STRAIN": 0.005,
+        "W_S2_ANGLE_ERROR": 1.0,
+        "W_S2_FLEXURE_STRAIN": 0.002,
+        "W_S3_STAGE1_COST": 1.0,
+        "W_S3_STAGE2_COST": 0.25,
+        "S3_MAX_S1_DEGRADATION_RATIO": 1.15
+    },
+    "metrics": {
+        "path_rms_error_mm": 11.061365822978177,
+        "angle_rms_error_deg": 40.90414066368873
+    },
+    "ground_pivots_mm": {
+        "O1": [
+            19.971132644715624,
+            -19.999995429741112
+        ],
+        "O2": [
+            -19.99999282766231,
+            19.99974334741016
+        ],
+        "O3": [
+            9.971119976148614,
+            -19.999991181551685
+        ]
+    },
+    "link_dimensions": {
+        "L_crank_O1A_mm": 25.672128427411955,
+        "L_coupler_AB_mm": 52.60553105745353,
+        "L_rocker_O2B_mm": 65.33102392162743,
+        "L_ternary_AC_mm": 74.63536165138706,
+        "L_ternary_BC_mm": 85.93007080373694,
+        "angle_BAC_rad": -1.4490303544040497,
+        "angle_BAC_deg": -83.02332369369798,
+        "L_CD_mm": 94.04800611149417,
+        "L_DO3_mm": 53.526447393371484,
+        "wing_mount_offset_rad": 2.96361493811846,
+        "wing_mount_offset_deg": 169.80262805611238,
+        "crank_phase_phi0_rad": 0.7740382826421284,
+        "crank_direction": -1,
+        "branch_stage1": 1,
+        "branch_stage2": -1
+    },
+    "flexure_half_stroke_deflections_deg": {
+        "O2_ground_rocker1": 27.68939672857055,
+        "B_coupler_rocker1": 29.96962509110359,
+        "C_ternary_linkCD": 20.415828210838352,
+        "D_linkCD_rocker2": 24.850662148101655,
+        "O3_ground_rocker2": 17.49388424282826
+    },
+    "neutral_fabrication_pose": {
+        "step_index": 44,
+        "crank_angle_deg": 220.0,
+        "O1_mm": [
+            19.971132644715624,
+            -19.999995429741112
+        ],
+        "O2_mm": [
+            -19.99999282766231,
+            19.99974334741016
+        ],
+        "O3_mm": [
+            9.971119976148614,
+            -19.999991181551685
+        ],
+        "A_mm": [
+            0.3051413198599491,
+            -36.501721497163096
+        ],
+        "B_mm": [
+            -52.29960934813058,
+            -36.78826118945439
+        ],
+        "C_mm": [
+            -9.163855176512707,
+            37.53053710802212
+        ],
+        "D_mm": [
+            -31.51488007615717,
+            -53.82294744228454
+        ]
+    }
+}
