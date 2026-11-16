@@ -1,0 +1,38 @@
+================ FINAL OPTIMIZED 6-BAR PARAMETERS ================
+Run Folder:          run_001_20261113_165415
+Timestamp:           2026-11-13 16:54:15
+Figure-8 Center:     (-15.0000, 36.4969) mm (Floating)
+O1 (Ground Crank):   (19.9711, -20.0000) mm
+O2 (Ground Rocker1): (-20.0000, 19.9997) mm
+O3 (Ground Rocker2): (9.9711, -20.0000) mm
+L_crank (O1-A):      25.6721 mm
+L_coupler (A-B):     52.6055 mm
+L_rocker (O2-B):     65.3310 mm
+Ternary Plate ABC:   L_AC (r_C) = 74.6354 mm, L_BC = 85.9301 mm, angle_BAC = -83.0233 deg
+Output Dyad:         L_CD = 94.0480 mm, L_DO3 = 53.5264 mm
+Link CD Polarity:    169.8 deg offset from wing chord
+Crank Phase phi_0:   44.3491 deg (Direction = CW)
+Assembly Branches:   Stage1 = +1, Stage2 = -1
+Path Tracking RMS:   11.0614 mm
+Angle Tracking RMS:  40.9041 deg
+
+--- OPTIMIZER HYPERPARAMETERS & WEIGHTS USED ---
+Seeds:                   (42,)
+Popsize / MaxIter:       S1=(60, 800), S2=(60, 600), S3_MaxIter=3500, Workers=-1
+Stage 1 Path Weights:    W_X = 1.0, W_Y = 12.0, W_SpanDeficit = 5.0
+Stage 1 Flexure Weight:  0.005
+Stage 2 Angle & Flexure: W_Angle = 1.0, W_Flexure = 0.002
+Stage 3 Coupled Weights: W_S1 = 1.0, W_S2 = 0.25 (Max S1 Degrad Ratio = 1.15)
+
+--- FLEXURAL HINGE DEFLECTIONS (+/- deg from neutral mid-stroke) ---
+Flexure O2 (Ground-to-Rocker1): +/- 27.69 deg
+Flexure B  (Coupler-to-Rocker1):+/- 29.97 deg
+Flexure C  (Ternary-to-LinkCD): +/- 20.42 deg
+Flexure D  (LinkCD-to-Rocker2): +/- 24.85 deg
+Flexure O3 (Ground-to-Rocker2): +/- 17.49 deg
+
+--- UNSTRESSED NEUTRAL FABRICATION POSE (Step 44 / 72) ---
+Pin A: (0.3051, -36.5017) mm
+Pin B: (-52.2996, -36.7883) mm
+Pin C: (-9.1639, 37.5305) mm
+Pin D: (-31.5149, -53.8229) mm
