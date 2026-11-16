@@ -6,7 +6,7 @@ from scipy.optimize import fsolve
 
 O2, O4, A, B, C, D, P = get_joints('O2 O4 A B C D P')
 P.follow = True
-params = pd.read_csv('New_Design/six_bar_loop_parameters.csv')
+params = pd.read_csv('final_design/six_bar_loop_parameters.csv')
 lengths = params[['Value']].to_numpy().flatten()
 
 #TODO adjust these according to PRBM
