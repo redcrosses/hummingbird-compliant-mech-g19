@@ -42,6 +42,10 @@ theta2 = psi - omega*t
 # initial guess; roughly
 guess = np.deg2rad([20, 120, 60, 180])
 
+mechanism = Mechanism(vectors=(r1, r2, r3, r5, r6, r7, r8, r9), origin=O2, loops=loops, guess=(guess, ), pos=theta2,) #vel=omega*np.ones_like(t),) #acc=np.zeros_like(t))
+mechanism.iterate()
+ani, fig1, ax1 = mechanism.get_animation(show_joints=True)
+
 sol = np.zeros((N, 4))
 x0 = guess
 for i in range(N):
@@ -80,10 +84,14 @@ omega_inp = np.gradient(theta2, t, axis=0)
 #torque-deflection
 torque = np.sum(Ks_PRBM * phis * phis_d, axis=1) / omega_inp
 
+fig2, ax2 = plt.subplots()
 theta2_plt = np.rad2deg(theta2)
-plt.plot(theta2_plt, torque)
-plt.gca().set_xlim(max(theta2_plt), min(theta2_plt))
-plt.xlabel(r'$\theta_{inp}$ [deg]'); plt.ylabel(r'Torque [Nmm]')
+ax2.plot(theta2_plt, torque)
+ax2.set_title("Torque-Deflection Relationship")
+ax2.set_xlim(max(theta2_plt), min(theta2_plt))
+ax2.set_xlabel(r'$\theta_{inp}$ [deg]'); ax2.set_ylabel(r'Torque [Nmm]')
+ax2.grid(which = 'both')
+ax2.minorticks_on()
 print(f'Min:{np.min(torque):.3f}[Nmm], Max:{np.max(torque):.3f}[Nmm]')
 
 plt.show()
