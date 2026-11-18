@@ -85,7 +85,7 @@ th7 = th6 - beta
 
 state = np.column_stack([theta2, th3, th4, th5, th6, th7, th8, th9])
 deflections = state - np.array([fabr_state]*t.shape[0])
-print(np.rad2deg(deflections[0,:]))
+# print(np.rad2deg(deflections[0,:]))
 
 #phiB, phi6, phi7, phiC, phiP
 phis = np.array([deflections[:,4] - deflections[:,2], #phiB
@@ -96,11 +96,12 @@ phis = np.array([deflections[:,4] - deflections[:,2], #phiB
 
 E = 200e3 #[N/mm^2]
 b = 10 #[mm] #fixed for all metal flexure options
-thicknesses = np.array([0.2, 0.2, 0.2, 0.2, 0.2]) #[mm], sprB, spr6, spr7, sprP
+thicknesses = 1*np.array([0.2, 0.2, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, spr7, sprP. options: 0.1, 0.2, 0.3, 0.4
 l = np.array([10, 10, 10, 10, 10,]) #[mm], lengths of the metal flexure(s)
 
-I = b * thicknesses**3 / 12 #with b the depth of the mechanism and t the thickness of the flexure element
-#torsional springs corresponding to: phiB, phi6, phi7, phiC, phiP; TODO fill in values
+I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness of the flexure
+
+#torsional springs corresponding to: phiB, phi6, phi7, phiC, phiP; 
 Ks_PRBM = E * np.array([I/l]*t.shape[0])
 
 # velocities and accelerations by finite differences
@@ -110,7 +111,7 @@ omega_inp = np.gradient(theta2, t, axis=0)
 #torque-deflection
 torque = np.sum(Ks_PRBM * phis * phis_d, axis=1) / omega_inp
 theta_torque_zero = CubicSpline(np.rad2deg(theta2)[::-1], torque[::-1], bc_type='not-a-knot').roots(extrapolate=False)
-print(theta_torque_zero)
+print(f'Zero-torque occurs at: {theta_torque_zero} [deg]')
 
 fig2, (ax2, ax3) = plt.subplots(2, 1, sharex='col')
 ax2.plot(theta2_deg, torque)
