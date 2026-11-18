@@ -1,5 +1,7 @@
 from mechanism import *
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import pandas as pd
@@ -86,16 +88,20 @@ deflections = state - np.array([fabr_state]*t.shape[0])
 print(np.rad2deg(deflections[0,:]))
 
 #phiB, phi6, phi7, phiC, phiP
-phis = np.array([deflections[:,4] - deflections[:,2],
-                 deflections[:,4],
-                 deflections[:,5],
-                 deflections[:,7] - deflections[:,6],
-                 deflections[:,2] - deflections[:,7]]).T
+phis = np.array([deflections[:,4] - deflections[:,2], #phiB
+                 deflections[:,4], #phi6
+                 deflections[:,5] - deflections[:,6], #phiD
+                 deflections[:,7] - deflections[:,6], #phiC
+                 deflections[:,2] - deflections[:,7]]).T #phiP
 
-E = 1
-I = 1
+E = 200e3 #[N/mm^2]
+b = 10 #[mm] #fixed for all metal flexure options
+thicknesses = np.array([0.2, 0.2, 0.2, 0.2, 0.2]) #[mm], sprB, spr6, spr7, sprP
+l = np.array([10, 10, 10, 10, 10,]) #[mm], lengths of the metal flexure(s)
+
+I = b * thicknesses**3 / 12 #with b the depth of the mechanism and t the thickness of the flexure element
 #torsional springs corresponding to: phiB, phi6, phi7, phiC, phiP; TODO fill in values
-Ks_PRBM = np.array([[1,1,1,1,1]]*t.shape[0])
+Ks_PRBM = E * np.array([I/l]*t.shape[0])
 
 # velocities and accelerations by finite differences
 phis_d  = np.gradient(phis, t, axis=0)
