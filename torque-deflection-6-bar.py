@@ -96,7 +96,7 @@ phis = np.array([deflections[:,4] - deflections[:,2], #phiB
 
 E = 200e3 #[N/mm^2]
 b = 10 #[mm] #fixed for all metal flexure options
-thicknesses = 1*np.array([0.2, 0.2, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, spr7, sprP. options: 0.1, 0.2, 0.3, 0.4
+thicknesses = 1*np.array([0.1, 0.2, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, spr7, sprP. options: 0.1, 0.2, 0.3, 0.4
 l = np.array([10, 10, 10, 10, 10,]) #[mm], lengths of the metal flexure(s)
 
 I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness of the flexure
@@ -115,9 +115,9 @@ print(f'Zero-torque occurs at: {theta_torque_zero} [deg]')
 
 fig2, (ax2, ax3) = plt.subplots(2, 1, sharex='col')
 ax2.plot(theta2_deg, torque)
-for t in theta_torque_zero:
-    ax2.axvline(t, linestyle='--', c='red')
-    ax3.axvline(t, linestyle='--', c='red')
+for thet in theta_torque_zero:
+    ax2.axvline(thet, linestyle='--', c='red')
+    ax3.axvline(thet, linestyle='--', c='red')
 ax2.set_title("Torque-Deflection Relationship")
 ax2.set_xlim(max(theta2_deg), min(theta2_deg))
 ax2.set_xlabel(r'$\theta_{inp}$ [deg]'); ax2.set_ylabel(r'Torque [Nmm]')
