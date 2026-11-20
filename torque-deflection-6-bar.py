@@ -1,3 +1,4 @@
+import os
 from mechanism import *
 import numpy as np
 import matplotlib
@@ -7,6 +8,8 @@ from matplotlib.widgets import Slider
 import pandas as pd
 from scipy.optimize import fsolve
 from scipy.interpolate import CubicSpline
+
+from ansys.mapdl.core import launch_mapdl
 
 O2, O4, A, B, C, D, P = get_joints('O2 O4 A B C D P')
 P.follow = True
@@ -94,7 +97,8 @@ phis = np.array([deflections[:,4] - deflections[:,2], #phiB
                  deflections[:,7] - deflections[:,6], #phiC
                  deflections[:,2] - deflections[:,7]]).T #phiP
 
-E = 200e3 #[N/mm^2]
+E = 185e3 #[N/mm^2] steel 1.4310, from datasheet, h+s
+endurance_lim = 550 #[N/mm^2] from datasheet, h+s
 b = 10 #[mm] #fixed for all metal flexure options
 thicknesses = 1*np.array([0.1, 0.2, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, spr7, sprP. options: 0.1, 0.2, 0.3, 0.4
 l = np.array([10, 10, 10, 10, 10,]) #[mm], lengths of the metal flexure(s)
@@ -113,8 +117,21 @@ torque = np.sum(Ks_PRBM * phis * phis_d, axis=1) / omega_inp
 theta_torque_zero = CubicSpline(np.rad2deg(theta2)[::-1], torque[::-1], bc_type='not-a-knot').roots(extrapolate=False)
 print(f'Zero-torque occurs at: {theta_torque_zero} [deg]')
 
-fig2, (ax2, ax3) = plt.subplots(2, 1, sharex='col')
-ax2.plot(theta2_deg, torque)
+ax1.lines[-1].set_label('PRBM')
+fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
+
+#get ansys results
+try:
+    imp = np.loadtxt('final_design/results_post26(v2).txt', skiprows=8)
+    theta2_ansys_deg = imp[:,2]
+    torque_ansys = imp[:,1]
+    ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
+    ax2.plot(theta2_ansys_deg, torque_ansys, c='cadetblue', label='ANSYS FEM results')
+    ax4.plot(imp[:,2], imp[:,6])
+except:
+    print('Could not import ANSYS APDL results :(')
+
+ax2.plot(theta2_deg, torque, c='maroon', label='PRBM')
 for thet in theta_torque_zero:
     ax2.axvline(thet, linestyle='--', c='red')
     ax3.axvline(thet, linestyle='--', c='red')
@@ -123,6 +140,8 @@ ax2.set_xlim(max(theta2_deg), min(theta2_deg))
 ax2.set_xlabel(r'$\theta_{inp}$ [deg]'); ax2.set_ylabel(r'Torque [Nmm]')
 ax2.grid(which = 'both')
 ax2.minorticks_on()
+ax1.legend()
+ax2.legend()
 print(f'Min:{np.min(torque):.3f}[Nmm], Max:{np.max(torque):.3f}[Nmm]')
 
 ax3.plot(theta2_deg, np.rad2deg(phis), label=[r'$\phi_B$', r'$\phi_6$', r'$\phi_7$', r'$\phi_C$', r'$\phi_P$'])
@@ -131,5 +150,17 @@ ax3.set_xlim(max(theta2_deg), min(theta2_deg))
 ax3.set_xlabel(r'$\theta_{inp}$ [deg]'); ax3.set_ylabel(r'Deflection [deg]')
 ax3.grid(which = 'both')
 ax3.minorticks_on()
+
+ax4.legend()
+ax4.set_title('Maximum Stresses over Rotation [MPa]')
+ax4.axhline(endurance_lim, linestyle='--', c='red')
+ax4.set_xlabel(r'$\theta_{inp}$ [deg]'); ax4.set_ylabel(r'Max von Mises Stress [MPa]')
+ax4.set_xlim(max(theta2_deg), min(theta2_deg))
+ax4.grid(which = 'both')
+ax4.minorticks_on()
+
+fig2.tight_layout()
+
+np.savetxt('final_design/PRBM_torque_deflection.csv', np.column_stack([theta2_deg, torque, np.rad2deg(phis)]), delimiter=',', header='theta2_deg, torque, phiB, phi6, phi7, phiC, phiP', comments='')
 
 plt.show()

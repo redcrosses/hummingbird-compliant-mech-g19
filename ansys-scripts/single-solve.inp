@@ -1,0 +1,28 @@
+!!!boundary conditions!!!
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+NSUBST,20,500,5
+AUTOTS,ON
+D,ALL,UZ,0                  ! planar problem
+D,ALL,ROTX,0
+D,ALL,ROTY,0
+D,nG,ALL,0                  ! ground at KP12
+D,nO2,UX,0                  ! crank base: pinned, rotation driven
+D,nO2,UY,0
+dth2=-10                    ! input rotation [deg], from fabrication state
+D,nO2,ROTZ,dth2*pi/180
+SOLVE
+
+/PNUM,SECN,1
+/NUMBER,1
+/PNUM,KP,0
+/PNUM,LINE,0
+/ESHAPE,1
+EPLOT
+
+FINISH
+/POST1
+SET,LAST
+/DSCALE,ALL,1
+PLDISP,1
