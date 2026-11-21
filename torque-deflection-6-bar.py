@@ -103,7 +103,7 @@ yield_str = 1000 #[N/mm^2] from virgamet
 endurance_lim = 550 #[N/mm^2] from datasheet, h+s
 b = 10 #[mm] #fixed for all metal flexure options
 thicknesses = 1*np.array([0.1, 0.1, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, sprD, sprC, sprP. options: 0.1, 0.2, 0.3, 0.4
-l = np.array([4.444*2, 4.444*6, 12.33, 2.27*4, 2.27*4,]) #[mm], lengths of the metal flexure(s)
+l = np.array([4.444*6, 4.444*6, 12.33*1.5, 2.27*4, 2.27*4,]) #[mm], lengths of the metal flexure(s)
 
 I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness of the flexure
 
@@ -124,7 +124,7 @@ fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
-    imp = np.loadtxt('final_design/results_post26(v2).txt', skiprows=8)
+    imp = np.loadtxt('final_design/results_post26(v3).txt', skiprows=8)
     theta2_ansys_deg = imp[:,2]
     torque_ansys = imp[:,1]
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
@@ -146,7 +146,7 @@ ax1.legend()
 ax2.legend()
 print(f'Min:{np.min(torque):.3f}[Nmm], Max:{np.max(torque):.3f}[Nmm]')
 
-ax3.plot(theta2_deg, np.rad2deg(phis), label=[r'$\phi_B$', r'$\phi_6$', r'$\phi_7$', r'$\phi_C$', r'$\phi_P$'])
+ax3.plot(theta2_deg, np.rad2deg(phis), label=[r'$\phi_B$', r'$\phi_6$', r'$\phi_D$', r'$\phi_C$', r'$\phi_P$'])
 ax3.legend()
 ax3.set_xlim(max(theta2_deg), min(theta2_deg))
 ax3.set_xlabel(r'$\theta_{inp}$ [deg]'); ax3.set_ylabel(r'Deflection [deg]')
