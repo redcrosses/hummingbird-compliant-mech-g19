@@ -8,6 +8,7 @@ from matplotlib.widgets import Slider
 import pandas as pd
 from scipy.optimize import fsolve
 from scipy.interpolate import CubicSpline
+from run_ansys_apdl import run_ansys
 
 from ansys.mapdl.core import launch_mapdl
 
@@ -109,6 +110,7 @@ I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness
 
 #torsional springs corresponding to: phiB, phi6, phiD, phiC, phiP; 
 Ks_PRBM = E * np.array([I/l]*t.shape[0])
+Ks_PRBM[0] = 2.65*0.85*E*I[0]/L6 #distributed compliant for L6
 
 # velocities and accelerations by finite differences
 phis_d  = np.gradient(phis, t, axis=0)
@@ -124,7 +126,15 @@ fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
-    imp = np.loadtxt('final_design/results_post26(v3).txt', skiprows=8)
+    print('Running the ANSYS APDL Routine based on ansys-scripts files...')
+    ansys_results_dir = 'final_design/results_post26(v4).txt'
+    cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
+    run_ansys(ansys_results_dir) #run the ansys routine
+    imp = df = (pd.read_csv(ansys_results_dir, sep=r"\s+", header=None,
+                  names=cols, engine="python", on_bad_lines="skip")
+        .apply(pd.to_numeric, errors="coerce")   # header text -> NaN
+        .dropna(how="any"))                      # drop the NaN rows
+    imp = df.to_numpy()
     theta2_ansys_deg = imp[:,2]
     torque_ansys = imp[:,1]
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
