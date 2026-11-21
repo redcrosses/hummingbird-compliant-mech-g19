@@ -13,11 +13,31 @@ L8=129.547303320354
 L9=25
 zoff = -10 
 
-LB = 10
-Lgrnd = 10
-LD = 10
-LC = 5
-LP = 5
+LB = 4.444*2
+Lgrnd = 4.444*6
+LD = 12.33
+LC = 2.27*4
+LP = 2.27*4
+
+!!!element types!!!
+Eplas=2000
+Esteel=185e3
+ET,1,BEAM188
+KEYOPT,1,3,2
+
+!!!material properties!!!
+MP,EX,1,Eplas
+MP,PRXY,1,0.35
+MP,EX,2,Esteel
+MP,PRXY,2,0.3
+
+!!!cross sections!!!
+SECTYPE,1,BEAM,RECT,PLASTIC
+SECDATA,5,10 !5x10mm rectangle
+SECTYPE,2,BEAM,RECT,STEEL
+SECDATA,0.1,10 !0.4x10mm rectangle
+SECTYPE,3,BEAM,CSOLID,PLASTIC
+SECDATA,3
 
 theta1=-2.10422939883268
 th2=89.595
@@ -70,25 +90,6 @@ LSTR,23,3 !line 17: Z connector at A
 KPLOT
 LPLOT
 
-!!!element types!!!
-Eplas=2000
-Esteel=185e3
-ET,1,BEAM188
-KEYOPT,1,3,2
-
-!!!material properties!!!
-MP,EX,1,Eplas
-MP,PRXY,1,0.35
-MP,EX,2,Esteel
-MP,PRXY,2,0.3
-
-!!!cross sections!!!
-SECTYPE,1,BEAM,RECT,PLASTIC
-SECDATA,5,10 #5x10mm rectangle
-SECTYPE,2,BEAM,RECT,STEEL
-SECDATA,0.4,10 #0.4x10mm rectangle
-SECTYPE,3,BEAM,CSOLID,PLASTIC
-SECDATA,3
 
 !!!steel flexures (lines 10-14)
 LSEL,S,LINE,,10,14

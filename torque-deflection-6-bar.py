@@ -97,15 +97,17 @@ phis = np.array([deflections[:,4] - deflections[:,2], #phiB
                  deflections[:,7] - deflections[:,6], #phiC
                  deflections[:,2] - deflections[:,7]]).T #phiP
 
+#TODO try to set up a fully plastic version 
 E = 185e3 #[N/mm^2] steel 1.4310, from datasheet, h+s
+yield_str = 1000 #[N/mm^2] from virgamet 
 endurance_lim = 550 #[N/mm^2] from datasheet, h+s
 b = 10 #[mm] #fixed for all metal flexure options
-thicknesses = 1*np.array([0.1, 0.2, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, spr7, sprP. options: 0.1, 0.2, 0.3, 0.4
-l = np.array([10, 10, 10, 10, 10,]) #[mm], lengths of the metal flexure(s)
+thicknesses = 1*np.array([0.1, 0.1, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, sprD, sprC, sprP. options: 0.1, 0.2, 0.3, 0.4
+l = np.array([4.444*2, 4.444*6, 12.33, 2.27*4, 2.27*4,]) #[mm], lengths of the metal flexure(s)
 
 I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness of the flexure
 
-#torsional springs corresponding to: phiB, phi6, phi7, phiC, phiP; 
+#torsional springs corresponding to: phiB, phi6, phiD, phiC, phiP; 
 Ks_PRBM = E * np.array([I/l]*t.shape[0])
 
 # velocities and accelerations by finite differences
@@ -120,7 +122,7 @@ print(f'Zero-torque occurs at: {theta_torque_zero} [deg]')
 ax1.lines[-1].set_label('PRBM')
 fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 
-#get ansys results
+#get ansys results TODO run ansys with the provided parameters from this script
 try:
     imp = np.loadtxt('final_design/results_post26(v2).txt', skiprows=8)
     theta2_ansys_deg = imp[:,2]
@@ -151,13 +153,14 @@ ax3.set_xlabel(r'$\theta_{inp}$ [deg]'); ax3.set_ylabel(r'Deflection [deg]')
 ax3.grid(which = 'both')
 ax3.minorticks_on()
 
-ax4.legend()
 ax4.set_title('Maximum Stresses over Rotation [MPa]')
-ax4.axhline(endurance_lim, linestyle='--', c='red')
+ax4.axhline(endurance_lim, linestyle='--', c='orange', label='Endurance Limit')
+ax4.axhline(yield_str, linestyle='--', c='red', label='Tensile Strength')
 ax4.set_xlabel(r'$\theta_{inp}$ [deg]'); ax4.set_ylabel(r'Max von Mises Stress [MPa]')
 ax4.set_xlim(max(theta2_deg), min(theta2_deg))
 ax4.grid(which = 'both')
 ax4.minorticks_on()
+ax4.legend()
 
 fig2.tight_layout()
 

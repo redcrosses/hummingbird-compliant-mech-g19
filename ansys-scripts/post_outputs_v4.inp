@@ -1,0 +1,57 @@
+! =====================================================================
+! Output script v4 - per-flexure max tensile / max compressive axial stress per step
+! Run in the SAME session after the solve loop (needs th2, dstep, nstep, nO2).
+! Writes results.csv, one row per load step:
+!   step, theta2_deg, torque_Nmm, x7_mm, y7_mm,
+!   then (tensile max, compressive min) for flexures B, O4, D, P, C  [MPa]
+! Flexures are lines 10 to 14, in that order.
+! =====================================================================
+ns = nstep                  ! lower by hand if the run stopped early
+
+/POST1
+SET,LIST
+KSEL,S,KP,,7
+NSLK,S
+*GET,nP,NODE,0,NUM,MIN
+ALLSEL
+*GET,x0,NODE,nP,LOC,X
+*GET,y0,NODE,nP,LOC,Y
+
+*DIM,smax,ARRAY,ns,5        ! max tensile (positive) axial stress per flexure
+*DIM,smin,ARRAY,ns,5        ! max compressive (negative) axial stress per flexure
+
+*CFOPEN,results,csv
+*CFWRITE,step,theta2_deg,torque_Nmm,x7_mm,y7_mm,B_ten,B_comp,O4_ten,O4_comp,D_ten,D_comp,P_ten,P_comp,C_ten,C_comp
+*DO,i,1,ns
+  SET,i,LAST
+  *GET,tq,NODE,nO2,RF,MZ                ! input torque
+  *GET,ux,NODE,nP,U,X
+  *GET,uy,NODE,nP,U,Y
+  thv = th2 + i*dstep
+  xv = x0 + ux
+  yv = y0 + uy
+  *DO,k,1,5
+    LSEL,S,LINE,,9+k                    ! one flexure at a time (lines 10 to 14)
+    ESLL,S
+    NSLE,S
+    NSORT,S,X                           ! signed axial stress (tension +, compression -)
+    *GET,smax(i,k),SORT,0,MAX
+    *GET,smin(i,k),SORT,0,MIN
+    ALLSEL
+  *ENDDO
+  bt=smax(i,1)
+  bc=smin(i,1)
+  ot=smax(i,2)
+  oc=smin(i,2)
+  dt=smax(i,3)
+  dc=smin(i,3)
+  pt=smax(i,4)
+  pc=smin(i,4)
+  ct=smax(i,5)
+  cc=smin(i,5)
+  *CFWRITE,%i%,%thv%,%tq%,%xv%,%yv%,%bt%,%bc%,%ot%,%oc%,%dt%,%dc%,%pt%,%pc%,%ct%,%cc%
+*ENDDO
+*CFCLOS
+*STATUS,smax
+*STATUS,smin
+FINISH
