@@ -98,19 +98,19 @@ phis = np.array([deflections[:,4] - deflections[:,2], #phiB
                  deflections[:,7] - deflections[:,6], #phiC
                  deflections[:,2] - deflections[:,7]]).T #phiP
 
-#TODO try to set up a fully plastic version 
+scale = 2
 E = 185e3 #[N/mm^2] steel 1.4310, from datasheet, h+s
 yield_str = 1000 #[N/mm^2] from virgamet 
 endurance_lim = 550 #[N/mm^2] from datasheet, h+s
 b = 10 #[mm] #fixed for all metal flexure options
 thicknesses = 1*np.array([0.1, 0.1, 0.1, 0.1, 0.1]) #[mm], sprB, spr6, sprD, sprC, sprP. options: 0.1, 0.2, 0.3, 0.4
-l = np.array([4.444*6, 4.444*6, 12.33*1.5, 2.27*4, 2.27*4,]) #[mm], lengths of the metal flexure(s)
+l = scale * np.array([4.444*6, 4.444*6, 12.33*1.5, 2.27*4, 2.27*4,]) #[mm], lengths of the metal flexure(s)
 
 I = b * thicknesses**3 / 12 #with b the depth of the flexure and t the thickness of the flexure
 
 #torsional springs corresponding to: phiB, phi6, phiD, phiC, phiP; 
 Ks_PRBM = E * np.array([I/l]*t.shape[0])
-Ks_PRBM[0] = 2.65*0.85*E*I[0]/L6 #distributed compliant for L6
+Ks_PRBM[0] = 2.65*0.85*E*I[0]/(scale*L6) #distributed compliant for L6; second spring is overwritten COMMENT IF NOT NEEDED
 
 # velocities and accelerations by finite differences
 phis_d  = np.gradient(phis, t, axis=0)
@@ -127,9 +127,9 @@ fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
     print('Running the ANSYS APDL Routine based on ansys-scripts files...')
-    ansys_results_dir = 'final_design/results_post26(v4).txt'
+    ansys_results_dir = 'final_design/results_post26(doubled-distributed).txt'
     cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
-    run_ansys(ansys_results_dir) #run the ansys routine
+    # run_ansys(ansys_results_dir) #run the ansys routine
     imp = df = (pd.read_csv(ansys_results_dir, sep=r"\s+", header=None,
                   names=cols, engine="python", on_bad_lines="skip")
         .apply(pd.to_numeric, errors="coerce")   # header text -> NaN
@@ -139,7 +139,7 @@ try:
     torque_ansys = imp[:,1]
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
     ax2.plot(theta2_ansys_deg, torque_ansys, c='cadetblue', label='ANSYS FEM results')
-    ax4.plot(imp[:,2], imp[:,6])
+    ax4.plot(imp[:,2], imp[:,6], c='cadetblue')
 except:
     print('Could not import ANSYS APDL results :(')
 

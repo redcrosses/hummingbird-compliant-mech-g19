@@ -1,24 +1,25 @@
 /CLEAR
 /PREP7
 pi = acos(-1) !bruh
+scale = 2
 *AFUN,DEG
-L1=73.8646673450504
-L2=27.5308690719627
-L3=84.4734335441051
-L4=150
-L5=128.402539267867
-L6=48.8866075220079
-L7=27.1708576611995
-L8=129.547303320354
-L9=25
-zoff = -10 
+L1=73.8646673450504*scale
+L2=27.5308690719627*scale
+L3=84.4734335441051*scale
+L4=150*scale
+L5=128.402539267867*scale
+L6=48.8866075220079*scale
+L7=27.1708576611995*scale
+L8=129.547303320354*scale
+L9=25*scale
+zoff = -10*scale
 
-!LB = 4.444*6
-LB = L6 - 1
-Lgrnd = 4.444*7
-LD = 12.33*2
-LC = 2.27*4
-LP = 2.27*4
+! LB = 4.444*4*scale
+LB = L6 - scale !distributed
+Lgrnd = 4.444*7*scale
+LD = 12.33*2*scale
+LC = 2.27*4*scale
+LP = 2.27*4*scale
 
 !!!element types!!!
 Eplas=2000
@@ -34,11 +35,11 @@ MP,PRXY,2,0.3
 
 !!!cross sections!!!
 SECTYPE,1,BEAM,RECT,PLASTIC
-SECDATA,5,10 !5x10mm rectangle
+SECDATA,5*scale,10*scale !5x10mm rectangle
 SECTYPE,2,BEAM,RECT,STEEL
 SECDATA,0.1,10 !0.1x10mm rectangle
 SECTYPE,3,BEAM,CSOLID,PLASTIC
-SECDATA,3
+SECDATA,3*scale
 SECTYPE,4,BEAM,RECT,STEEL
 SECDATA,0.1,10 !0.4x10mm rectangle
 
@@ -122,8 +123,8 @@ LSEL,S,LINE,,2,17
 LMESH,ALL
 ALLSEL
 /ESHAPE,1
-!EPLOT
-!SLIST,ALL,,,FULL
+EPLOT
+SLIST,ALL,,,FULL
 
 !!!node numbers at the keypoints we need!!!
 KSEL,S,KP,,3
