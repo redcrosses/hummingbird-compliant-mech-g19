@@ -38,8 +38,8 @@ fem:
     z_offset: 2
 
     flexures:
-      O4: 15
-      B: 15
-      C: 15
-      D: 15
-      P: 15
+      O4: 20
+      B: 20
+      C: 20
+      D: 20
+      P: 20

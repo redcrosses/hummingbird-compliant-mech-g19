@@ -13,10 +13,12 @@ def flexure_offsets(flex_len, vec1, vec2):
     ret1 = -norm_vec1*flex_len/2
     ret2 = norm_vec1*flex_len/2
     ret3 = np.dot(ret2, ret2) / np.dot(vec2, ret2) * vec2
+    #The alternative point that can be used if the angle between vectors is acute
+    ret4 = 2*ret2-ret3
 
-    return (ret1, ret2, ret3)
+    return (ret1, ret2, ret3, ret4)
 
-mapdl = launch_mapdl(exec_file=r"D:\ProgramFiles\ANSYS Inc\v261\ansys\bin\winx64\ANSYS261.exe", log_apdl="alternative/mechanism.inp")
+mapdl = launch_mapdl(log_apdl="alternative/mechanism.inp")
 
 with open("alternative/params.yaml", "r") as f:
     data = yaml.safe_load(f)
@@ -46,6 +48,13 @@ MP,PRXY,2,0.3       !TODO outside def
 """
 mapdl.input_strings(element_str)
 
+#--CROSS-SECTIONS
+mapdl.sectype(1, "BEAM", "RECT", "LINK")    #type: ignore
+mapdl.secdata(fem_dims["link_thickness"], fem_dims["link_depth"])
+
+mapdl.sectype(2, "BEAM", "RECT", "FLEXURE") #type: ignore
+mapdl.secdata(fem_dims["flex_thickness"], fem_dims["flex_depth"])
+
 #---KEYPOINTS---
 geom = {}
 geom['O2'] = np.array([0.0, 0.0, 0.0])
@@ -59,7 +68,6 @@ geom['P']  = geom['C']  + vecs['r9']
 level_offset = np.array([0,0, fem_dims['z_offset']+fem_dims['link_depth']])
 
 vecs["r10"] = geom["D"] - geom["B"]
-
 
 kps = {}
 kps[1] = geom['O2'] + level_offset
@@ -79,53 +87,68 @@ kps[9] = geom['D'] + D_flexure_offsets[2]
 C_flexure_offsets = flexure_offsets(fem_flexures['C'], -vecs['r9'], -vecs['r8'])
 kps[10] = geom['C'] + C_flexure_offsets[0]
 kps[11] = geom['C'] + C_flexure_offsets[1]
-kps[12] = geom['C'] + C_flexure_offsets[2]
+kps[12] = geom['C'] + C_flexure_offsets[3]
 
 P_flexure_offsets = flexure_offsets(fem_flexures['P'], vecs['r9'], vecs['r5'])
 kps[13] = geom['P'] + P_flexure_offsets[0]
 kps[14] = geom['P'] + P_flexure_offsets[1]
 kps[15] = geom['P'] + P_flexure_offsets[2]
 
+O4_flexure_offsets = flexure_offsets(fem_flexures['O4'], geom['O4'] - kps[9], np.array([0,1,0]))
+kps[16] = geom['O4'] + O4_flexure_offsets[0]
+kps[17] = geom['O4'] + O4_flexure_offsets[1]
+
 for kp_id, (x, y, z) in kps.items():
      mapdl.k(kp_id, x, y, z)
 
-
-
 #---LINES---
-lines = [
+flexure_lines = [
+    (4,5), #flexure
+    (8,7), #flexure
+    (11,10), #flexure
+    (13,14), #flexure
+    (16,17)  # ground O4
+]
+
+link_lines = [
     (1, 2),
     (3,4),
-    (4,5), #flexure
     (5,6),
     (6,9),
     (9,8),
-    (8,7), #flexure
     (7,12),
     (12,11),
-    (11,10), #flexure
     (10,13),
-    (13,14), #flexure
     (14,15),
-    (15,3)
+    (15,3),
+    (9,16)
 ]
 
-for p1, p2 in lines:
-    mapdl.lstr(p1, p2)
+# TODO export parameter configuration
 
-pl = mapdl.lplot(
-    show_line_numbering=True,
-    color_lines=True,
-    line_width=3,
-    return_plotter=True,
-    off_screen=True,
-)
+#---CONFIGURE MESH---
+flexure_ids = []
+for p1, p2 in flexure_lines:
+    line_id = mapdl.lstr(p1,p2)   #type: ignore
 
-mapdl.kplot(
-    plotter=pl,
-    show_keypoint_numbering=True,
-    point_size=10,
-    color="red",
-    cpos="xy",
-)
+    mapdl.lsel("S", "LINE", "", line_id)    #type: ignore
+    mapdl.latt(mat=2, type_=1, secnum=2)    #type: ignore
+    mapdl.lesize(line_id, ndiv=15)        #type: ignore
+
+link_ids = []
+for p1, p2 in link_lines:
+    line_id = mapdl.lstr(p1, p2)  #type: ignore
+
+    mapdl.lsel("S", "LINE", "", line_id)    #type: ignore
+    mapdl.latt(mat=1, type_=1, secnum=1)    #type: ignore
+    mapdl.lesize(line_id, ndiv=5)        #type: ignore
+
+#---MESH---
+mapdl.allsel()
+mapdl.lmesh("ALL")
+
+#---PLOT MESH---
+mapdl.eshape(1) #type: ignore
+mapdl.open_gui()
 
 mapdl.exit()
