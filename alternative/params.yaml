@@ -1,0 +1,45 @@
+prbm:
+  scale: 2
+  lengths:
+    L1: 147.7293346901008
+    L2: 55.0617381439254
+    L3: 168.9468670882102
+    L4: 300
+    L5: 256.805078535734
+    L6: 97.7732150440158
+    L7: 54.341715322399
+    L8: 259.094606640708
+    L9: 50
+
+  fabrication_angles:
+    angle_unit: deg
+    th1: -2.10422939883268
+    th2: 89.595
+    th3: 12.177
+    th4: 70.920
+    th5: 105.144
+    th6: 79.448
+    th7: 21.111
+    th8: 68.64
+    th9: 136.79
+
+fem:
+  E_flex: 185e3 
+  E_link: 2e3
+
+  dimensions:
+    unit: mm
+    flex_thickness: 0.1
+    flex_depth: 10
+
+    link_thickness: 10
+    link_depth: 10
+
+    z_offset: 2
+
+    flexures:
+      O4: 15
+      B: 15
+      C: 15
+      D: 15
+      P: 15
