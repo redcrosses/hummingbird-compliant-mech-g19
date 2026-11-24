@@ -3,8 +3,7 @@ import shutil
 from ansys.mapdl.core import launch_mapdl
 
 #YOU DON'T NEED TO RUN THIS SCRIPT TO RUN ANSYS WITH THE INPUT FILES, BUT THIS WILL RUN THE ENTIRE ROUTINE HEADLESS
-def run_ansys(ident_str, show=False):
-    input_dir = r"C:\Users\denki\Documents\GitHub\hummingbird-compliant-mech-g19\ansys-scripts" #has to be global (change to yours)
+def run_ansys(ident_str, input_dir, show=False):
     run_dir = r"C:\Users\denki\Documents\ansys-apdl\compliant\hummingbird"+ f"-{ident_str}" #has to be global as well (will be created if it doesn't exist)
     if not os.path.exists(run_dir):
         os.makedirs(run_dir, exist_ok=True)

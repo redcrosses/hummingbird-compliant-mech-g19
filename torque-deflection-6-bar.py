@@ -23,7 +23,7 @@ fabr_state = pd.read_csv('final_design/fab_angles.csv')[['Value']].to_numpy().fl
 gammas = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])
 L1, L2, L3, L4, L5, L6, L7, L8, L9, theta1, psi, alpha, beta, gamma = lengths
 
-L1, L2, L3, L4, L5, L6, L7, L8, L9 = gammas * np.array([L1, L2, L3, L4, L5, L6, L7, L8, L9])
+L1, L2, L3, L4, L5, L6, L7, L8, L9 = 2 * gammas * np.array([L1, L2, L3, L4, L5, L6, L7, L8, L9])
 theta1, psi, alpha, beta, gamma = np.deg2rad([theta1, psi, alpha, beta, gamma])
 
 r1 = Vector((O2, O4), r=L1, theta=theta1, style='ground')
@@ -127,16 +127,19 @@ fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
     print('Running the ANSYS APDL Routine based on ansys-scripts files...')
-    identifier = 'doubled-distributed'
+    identifier = 'doubled-straight'
     cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
-    run_ansys('doubled-distributed', show=False) #run the ansys routine; comment if not needed
-    df = (pd.read_csv(f"final_design/results_post26_{identifier}.txt", sep=r"\s+", header=None,
+    input_dir = r"C:\Users\denki\Documents\GitHub\hummingbird-compliant-mech-g19\ansys-scripts-straight" #has to be global (change to yours)
+    # run_ansys(identifier, input_dir=input_dir, show=True) #run the ansys routine; comment if not needed
+    
+    df = (pd.read_csv(f"results_post26_{identifier}.txt", sep=r"\s+", header=None,
                   names=cols, engine="python", on_bad_lines="skip")
         .apply(pd.to_numeric, errors="coerce")   # header text -> NaN
         .dropna(how="any"))                      # drop the NaN rows
     imp = df.to_numpy()
     theta2_ansys_deg = imp[:,2]
     torque_ansys = imp[:,1]
+    print(imp)
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
     ax2.plot(theta2_ansys_deg, torque_ansys, c='cadetblue', label='ANSYS FEM results')
     ax4.plot(imp[:,2], imp[:,6], c='cadetblue')

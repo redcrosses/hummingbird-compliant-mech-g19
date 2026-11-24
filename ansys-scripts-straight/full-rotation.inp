@@ -1,0 +1,54 @@
+
+!!!================ full-revolution solve =================
+dtot  = -360              ! total input rotation [deg] (negative = theta2 decreasing)
+dstep = -5                ! rotation per load step [deg]
+nstep = dtot/dstep
+nsub0 = 10                ! initial substeps per load step
+nsmax = 500               ! max substeps (match whatever worked for you)
+nsmin = 2
+
+/SOLU
+ANTYPE,STATIC
+NLGEOM,ON
+NROPT,FULL
+LNSRCH,ON
+PRED,ON
+NEQIT,50
+AUTOTS,ON
+KBC,0                     ! ramp each load step
+OUTRES,ERASE
+OUTRES,ALL,LAST           ! one stored result set per load step
+D,ALL,UZ,0
+D,ALL,ROTX,0
+D,ALL,ROTY,0
+D,nG,ALL,0
+D,nO2,UX,0
+D,nO2,UY,0
+
+*DO,i,1,nstep
+  D,nO2,ROTZ,(i*dstep)*pi/180
+  TIME,i
+  NSUBST,nsub0,nsmax,nsmin
+  SOLVE
+  *GET,conv,ACTIVE,0,SOLU,CNVG
+  *IF,conv,EQ,0,THEN
+    *MSG,INFO,i*dstep
+    (' Did not converge at crank rotation ',F8.2,' deg - stopping')
+    *EXIT
+  *ENDIF
+*ENDDO
+FINISH
+
+/POST26
+RFORCE,2,nO2,M,Z,MZ
+NSOL,3,nO2,ROT,Z,ROTZ
+/OUTPUT,torque_vs_angle,txt
+PRVAR,2,3
+/OUTPUT
+
+/POST1
+SET,LAST
+/DSCALE,1,1
+/ESHAPE,1
+PLNSOL,S,EQV,2
+ANTIME,72,0.01,72,,2,0,72
