@@ -127,10 +127,10 @@ fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
     print('Running the ANSYS APDL Routine based on ansys-scripts files...')
-    ansys_results_dir = 'final_design/results_post26(doubled-distributed).txt'
+    identifier = 'doubled-distributed'
     cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
-    # run_ansys(ansys_results_dir) #run the ansys routine
-    imp = df = (pd.read_csv(ansys_results_dir, sep=r"\s+", header=None,
+    run_ansys('doubled-distributed', show=False) #run the ansys routine; comment if not needed
+    df = (pd.read_csv(f"final_design/results_post26_{identifier}.txt", sep=r"\s+", header=None,
                   names=cols, engine="python", on_bad_lines="skip")
         .apply(pd.to_numeric, errors="coerce")   # header text -> NaN
         .dropna(how="any"))                      # drop the NaN rows
@@ -140,8 +140,9 @@ try:
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
     ax2.plot(theta2_ansys_deg, torque_ansys, c='cadetblue', label='ANSYS FEM results')
     ax4.plot(imp[:,2], imp[:,6], c='cadetblue')
-except:
+except Exception as e:
     print('Could not import ANSYS APDL results :(')
+    print(e)
 
 ax2.plot(theta2_deg, torque, c='maroon', label='PRBM')
 for thet in theta_torque_zero:
@@ -171,6 +172,7 @@ ax4.set_xlim(max(theta2_deg), min(theta2_deg))
 ax4.grid(which = 'both')
 ax4.minorticks_on()
 ax4.legend()
+
 
 fig2.tight_layout()
 
