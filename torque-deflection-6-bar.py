@@ -122,30 +122,45 @@ theta_torque_zero = CubicSpline(np.rad2deg(theta2)[::-1], torque[::-1], bc_type=
 print(f'Zero-torque occurs at: {theta_torque_zero} [deg]')
 
 ax1.lines[-1].set_label('PRBM')
-fig2, (ax2, ax3, ax4) = plt.subplots(3, 1, sharex='col')
+fig2, (ax, ax2, ax3, ax4) = plt.subplots(4, 1, sharex='col')
+
+#run ansys
+identifier = 'doubled-straight'
+cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
+try:
+    print('Running the ANSYS APDL Routine based on ansys-scripts files...')
+    input_dir = r"C:\Users\denki\Documents\GitHub\hummingbird-compliant-mech-g19\ansys-scripts-straight" # has to be global (change to yours)
+    run_ansys(identifier, input_dir=input_dir, show=False) #run the ansys routine; comment if not needed
+except Exception as e:
+    print('Failed to run APDL :(')
+    print(e)
 
 #get ansys results TODO run ansys with the provided parameters from this script
 try:
-    print('Running the ANSYS APDL Routine based on ansys-scripts files...')
-    identifier = 'doubled-straight'
-    cols = ["TIME", "TORQUE", "ROTZ", "X_P7", "Y_P7", "S_MIN", "S_MAX"]
-    input_dir = r"C:\Users\denki\Documents\GitHub\hummingbird-compliant-mech-g19\ansys-scripts-straight" #has to be global (change to yours)
-    # run_ansys(identifier, input_dir=input_dir, show=True) #run the ansys routine; comment if not needed
-    
     df = (pd.read_csv(f"results_post26_{identifier}.txt", sep=r"\s+", header=None,
                   names=cols, engine="python", on_bad_lines="skip")
-        .apply(pd.to_numeric, errors="coerce")   # header text -> NaN
-        .dropna(how="any"))                      # drop the NaN rows
+        .apply(pd.to_numeric, errors="coerce")
+        .dropna(how="any"))
     imp = df.to_numpy()
     theta2_ansys_deg = imp[:,2]
     torque_ansys = imp[:,1]
-    print(imp)
+    # print(imp)
     ax1.plot(imp[:,3], imp[:,4], c='green', label='ANSYS FEM results')
+    ax.plot(imp[:,2], imp[:,5], c='cadetblue', label='ANSYS FEM results')
     ax2.plot(theta2_ansys_deg, torque_ansys, c='cadetblue', label='ANSYS FEM results')
     ax4.plot(imp[:,2], imp[:,6], c='cadetblue')
 except Exception as e:
     print('Could not import ANSYS APDL results :(')
     print(e)
+
+ax.plot(theta2_deg, np.rad2deg(th9), c='maroon', label='PRBM')
+ax.set_title("Wing-angle over rotation [deg]")
+ax.set_xlim(max(theta2_deg), min(theta2_deg))
+ax.set_ylim(min(np.rad2deg(th9)), max(np.rad2deg(th9)))
+ax.set_xlabel(r'$\theta_{inp}$ [deg]'); ax2.set_ylabel(r'$\theta_9$ [deg]')
+ax.grid(which = 'both')
+ax.minorticks_on()
+ax.legend()
 
 ax2.plot(theta2_deg, torque, c='maroon', label='PRBM')
 for thet in theta_torque_zero:
@@ -161,11 +176,12 @@ ax2.legend()
 print(f'Min:{np.min(torque):.3f}[Nmm], Max:{np.max(torque):.3f}[Nmm]')
 
 ax3.plot(theta2_deg, np.rad2deg(phis), label=[r'$\phi_B$', r'$\phi_6$', r'$\phi_D$', r'$\phi_C$', r'$\phi_P$'])
-ax3.legend()
+ax3.set_title("PRBM Deflections")
 ax3.set_xlim(max(theta2_deg), min(theta2_deg))
 ax3.set_xlabel(r'$\theta_{inp}$ [deg]'); ax3.set_ylabel(r'Deflection [deg]')
 ax3.grid(which = 'both')
 ax3.minorticks_on()
+ax3.legend()
 
 ax4.set_title('Maximum Stresses over Rotation [MPa]')
 ax4.axhline(endurance_lim, linestyle='--', c='orange', label='Endurance Limit')
@@ -175,7 +191,6 @@ ax4.set_xlim(max(theta2_deg), min(theta2_deg))
 ax4.grid(which = 'both')
 ax4.minorticks_on()
 ax4.legend()
-
 
 fig2.tight_layout()
 

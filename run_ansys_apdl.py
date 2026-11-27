@@ -26,6 +26,7 @@ def run_ansys(ident_str, input_dir, show=False):
     
     if show:
         mapdl.open_gui()
+        mapdl.exit()
     else: 
         mapdl.exit()
 

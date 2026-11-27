@@ -93,8 +93,6 @@ LSTR,24,4 !line 17: Z connector at B
 LSTR,27,7 !line 18: Z connector at P
 LSTR,23,3 !line 19: Z connector at A
 
-
-
 /PNUM,KP,1
 /PNUM,LINE,1
 /VIEW,1,,,1
