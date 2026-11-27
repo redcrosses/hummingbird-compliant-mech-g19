@@ -14,8 +14,8 @@ L8=129.547303320354*scale
 L9=25*scale
 zoff = -10*scale
 
-! LB = 4.444*4*scale
-LB = L6 - scale !distributed
+LB = 4.444*4*scale
+! LB = L6 - scale !distributed
 Lgrnd = 4.444*7*scale
 LD = 12.33*2*scale
 LC = 2.27*4*scale
@@ -60,7 +60,7 @@ K,13,KX(3),KY(3),0      ! crank end of the revolute pin (z=0)
 K,23,KX(3),KY(3),0      ! pin-side end of the A connector (z=0)
 K,4,KX(2)+L6*cos(th6),KY(2)+L6*sin(th6),zoff   ! B on the triangle plane
 K,24,KX(4),KY(4),0      ! B at z=0: flexure end
-! K,14,KX(2)+(L6-lB)*cos(th6),KY(2)+(L6-lB)*sin(th6),0
+K,14,KX(2)+(L6-lB)*cos(th6),KY(2)+(L6-lB)*sin(th6),0
 K,7,KX(3)-L5*cos(th5),KY(3)-L5*sin(th5),zoff   ! P on the triangle plane
 K,27,KX(7),KY(7),0      ! P at z=0: flexure end
 K,5,KX(7)-L9*cos(th9),KY(7)-L9*sin(th9),0
@@ -77,21 +77,22 @@ LSTR,1,13 !line 2: crank, pinned to triangle
 LSTR,3,4
 LSTR,7,4
 LSTR,7,3
+LSTR,2,14
 LSTR,2,22
 LSTR,22,66
 LSTR,66,6
 LSTR,5,55
 LSTR,55,16
-LSTR,17,15 !line 11
+LSTR,17,15 !line 12
 
-LSTR,2,24 !line 12 (flexure at B)
+LSTR,14,24 !line 13 (flexure at B)
 LSTR,2,12
 LSTR,16,6
-LSTR,27,17 !line 15 (flexure at P)
-LSTR,15,5 !line 16
-LSTR,24,4 !line 17: Z connector at B
-LSTR,27,7 !line 18: Z connector at P
-LSTR,23,3 !line 19: Z connector at A
+LSTR,27,17 !line 16 (flexure at P)
+LSTR,15,5 !line 17
+LSTR,24,4 !line 18: Z connector at B
+LSTR,27,7 !line 19: Z connector at P
+LSTR,23,3 !line 20: Z connector at A
 
 /PNUM,KP,1
 /PNUM,LINE,1
@@ -102,31 +103,31 @@ KPLOT
 LPLOT
 
 !!!steel flexures (lines 10-14)
-LSEL,S,LINE,,12,19
+LSEL,S,LINE,,13,20
 CM,STEEL_FLEX,LINE
 LATT,2,,1,,,,2
 LESIZE,ALL,,,20
 ALLSEL
 
-LSEL,S,LINE,,12,12
+LSEL,S,LINE,,13,13
 CM,STEEL_FLEX,LINE
 LATT,2,,1,,,,4
 LESIZE,ALL,,,20
 ALLSEL
 
 !!!plastic links (lines 2-9)
-LSEL,S,LINE,,2,11
+LSEL,S,LINE,,2,12
 CM,PLASTIC,LINE
 LATT,1,,1,,,,1
 LESIZE,ALL,,,1
 
-LSEL,S,LINE,,17,19        ! Z connectors are plastic too
+LSEL,S,LINE,,18,20        ! Z connectors are plastic too
 CM,PLASTIC,LINE
 LATT,1,,1,,,,3
 LESIZE,ALL,,,1
 
 !!!mesh everything at once
-LSEL,S,LINE,,2,19
+LSEL,S,LINE,,2,20
 LMESH,ALL
 ALLSEL
 /ESHAPE,1

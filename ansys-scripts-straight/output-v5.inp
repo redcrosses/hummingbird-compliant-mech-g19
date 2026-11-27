@@ -1,0 +1,81 @@
+ns = nstep
+
+/POST1
+SET,LIST
+KSEL,S,KP,,17
+NSLK,S
+*GET,nP,NODE,0,NUM,MIN
+ALLSEL
+
+*GET,x0,NODE,nP,LOC,X
+*GET,y0,NODE,nP,LOC,Y
+
+SET,LIST
+KSEL,S,KP,,15
+NSLK,S
+*GET,nC,NODE,0,NUM,MIN
+ALLSEL
+
+*GET,x0C,NODE,nC,LOC,X
+*GET,y0C,NODE,nC,LOC,Y
+
+*DIM,thdeg,ARRAY,ns
+*DIM,xp,ARRAY,ns
+*DIM,yp,ARRAY,ns
+*DIM,xc,ARRAY,ns
+*DIM,yc,ARRAY,ns
+*DIM,angl,ARRAY,ns
+
+*DIM,smin_a,ARRAY,ns
+*DIM,smax_a,ARRAY,ns
+ESEL,S,TYPE,,1
+
+/OUTPUT,stress_minmax,txt
+
+*DO,i,1,ns
+  SET,i,LAST
+  *GET,smax_a(i),SECR,ALL,S,EQV,MAX
+  *GET,smin_a(i),SECR,ALL,S,EQV,MIN
+  *GET,ux,NODE,nP,U,X
+  *GET,uy,NODE,nP,U,Y
+
+  *GET,uxC,NODE,nC,U,X
+  *GET,uyC,NODE,nC,U,Y
+
+  thdeg(i) = th2 + i*dstep
+  xp(i) = x0 + ux
+  yp(i) = y0 + uy
+  xc(i) = x0C + uxC
+  yc(i) = y0C + uyC
+  angl(i) = ATAN2(yp(i)-yc(i), xp(i)-xc(i))
+
+  thv = thdeg(i)
+  sn = smin_a(i)
+  sx = smax_a(i)
+  *MSG,INFO,i,thv,sn,sx
+  (' MINMAX ',F6.0,1X,F9.3,1X,E14.6,1X,E14.6)
+*ENDDO
+
+ALLSEL,ALL
+/OUTPUT
+*STATUS,smin_a
+*STATUS,smax_a
+*STATUS,xp
+*STATUS,yp
+*STATUS,xc
+*STATUS,yc
+FINISH
+
+/POST26
+RFORCE,2,nO2,M,Z,TORQUE
+VPUT,thdeg(1),3,1,,THETA2
+VPUT,xp(1),4,1,,X_P17
+VPUT,yp(1),5,1,,Y_P17
+VPUT,angl(1),6,1,,WING_ANGLE
+! VPUT,smin_a(1),7,1,,S_MIN
+VPUT,smax_a(1),7,1,,S_MAX
+
+EXTREM,2,7
+/OUTPUT,results_post26,txt
+PRVAR,2,3,4,5,6,7
+/OUTPUT
